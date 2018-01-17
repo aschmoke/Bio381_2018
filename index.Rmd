@@ -3,7 +3,16 @@ title: "Bio 381 Webpage"
 author: "Anna Schmoker"
 date: "January 17 2018"
 output: html_document
+
 ---
 
+## Creates a title
+
+**bold**
+*itallics*
+
+* item 1
+* item 2
+* item 3
 
 
