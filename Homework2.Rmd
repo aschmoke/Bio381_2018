@@ -6,4 +6,4 @@ output: html_document
 ---
 
 ![](Logic_Tree_screenshot.png)
-
+![](Early_Graphs.png)
