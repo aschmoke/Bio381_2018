@@ -1,0 +1,8 @@
+---
+title: "Homework 2"
+author: "Anna Schmoker"
+date: "1/24/2018"
+output: html_document
+---
+
+![](Logic_Tree.png)
