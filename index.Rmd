@@ -7,10 +7,6 @@ output: html_document
 
 ### Creates a title
 
-**bold**
-*itallics*
-
-* item 1
-* item 2
+[Homework 2](Logic_Tree.png)
 
 
