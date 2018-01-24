@@ -1,12 +1,14 @@
 ---
 title: "Bio 381 Webpage"
 author: "Anna Schmoker"
-date: "January 23 2018"
+date: "January 24 2018"
 output: html_document
 ---
 
 ### Assignments
 
-[Homework 2](Logic_Tree.png)
+[Homework 2](Logic_Tree_screenshot.png)   
+Item 1. Logic tree outlining the flow of an *in silico* proteomics screen to identify protein-protein interactions dependent upon motif modifications. Rather than limiting the screen to all proteins expressed in a particular cell type or tissue, this *in silico* approach is expanded to encompass the entire proteome of any organism of interest. This example uses the binding motif of the SH2 domain of the adaptor protein CRKL, which binds preferentially to phosphorylated tyrosine residues in YXXP motifs.
+Item 2. 
 
 

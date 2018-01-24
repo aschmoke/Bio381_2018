@@ -5,4 +5,5 @@ date: "1/24/2018"
 output: html_document
 ---
 
-![](Logic_Tree.png)
+![](Logic_Tree_screenshot.png)
+
