@@ -2,12 +2,17 @@
 title: "Bio 381 Webpage"
 author: "Anna Schmoker"
 date: "January 24 2018"
-output: html_document
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
 ---
 
 ### Assignments
 
 [Homework 2](Homework2.html)   
+[Homework 3](Homework_3.pdf)
+
 
 
 

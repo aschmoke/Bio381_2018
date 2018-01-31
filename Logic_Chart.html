@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
-<title>Logic Chart.md</title><link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext' rel='stylesheet' type='text/css' /><style type='text/css'>html {overflow-x: initial !important;}:root { --node-fill: rgb(236, 236, 255); --node-border: rgb(204, 204, 255); --note-fill: rgb(255, 245, 173); --note-border: rgb(170, 170, 51); --cluster-fill: rgb(255, 255, 222) !important; --cluster-border: rgb(170, 170, 51) !important; }
+<title>Logic Chart.md</title><link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext' rel='stylesheet' type='text/css' /><style type='text/css'>html {overflow-x: initial !important;}:root { --node-fill: rgb(236, 236, 255); --node-border: rgb(204, 204, 255); --note-fill: rgb(255, 245, 173); --note-border: rgb(170, 170, 51); --cluster-fill: rgb(255, 255, 222) !important; --cluster-border: rgb(170, 170, 51) !important; }
 .mermaid .label { color: var(--text-color); }
 .node rect, .node circle, .node ellipse, .node polygon { fill: var(--node-fill); stroke: var(--node-border); stroke-width: 1px; }
 .edgePath .path { stroke: var(--text-color); }
@@ -206,7 +206,8 @@ p { -webkit-margin-before: 1rem; -webkit-margin-after: 1rem; -webkit-margin-star
 a { cursor: pointer; }
 sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.701961); color: rgb(85, 85, 85); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; }
 #write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; margin: 4px 0px 0px; }
-figure { max-width: 100%; overflow-x: auto; margin: 0px; }
+#write > figure:first-child { margin-top: 16px; }
+figure { overflow-x: auto; margin: -8px 0px 0px -8px; max-width: calc(100% + 16px); padding: 8px; }
 tr { page-break-inside: avoid; page-break-after: auto; }
 thead { display: table-header-group; }
 table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; page-break-inside: auto; text-align: left; }
@@ -304,7 +305,7 @@ a.md-print-anchor { border: none !important; display: inline-block !important; p
     --control-text-color: #777;
 }
 
-@include-when-export url(http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext);
+@include-when-export url(https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext);
 
 @font-face {
     font-family: 'Open Sans';
