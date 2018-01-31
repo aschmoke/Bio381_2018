@@ -84,5 +84,3 @@ knitr::opts_chunk$set(echo = FALSE)
 \end{center}
 \end{column}
 \end{columns}
-
-## The End
