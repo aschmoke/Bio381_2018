@@ -1,0 +1,107 @@
+---
+title: "Homework3"
+author: "Anna Schmoker"
+date: "2/7/2018"
+output: html_document
+---
+1. Suppose x = 1.1, a = 2.2, and b = 3.3. Assign each expression to the value of the variable zand print the value stored in z.
+
+```{r}
+x <- 1.1
+a <- 2.2
+b <- 3.3
+z <- x^a^b
+print(z)
+z <- (x^a)^b
+print(z)
+z <- (3*(x^3))+(2*(x^2))+1
+print(z)
+floor((z%%1)*10)
+```
+
+2. Using the rep and seq functions, create the following vectors:
+
+```{r}
+x <- c(1:8)
+y <- c(7:1)
+rep(c(x,y))
+myVec <- c(1:5)
+rep(myVec, times=myVec)
+rev(rep(seq(1:5), times=rev(myVec)))
+
+```
+
+3.Create a vector of two random uniform numbers. In a spatial map, these can be interpreted as x and y coordinates that give the location of an individual (such as a marked forest tree in a plot that has been mapped). Using one of R’s inverse trigonometry functions (asin(), acos(), or atan()), convert these numbers into polar coordinates (If you don’t know what polar coordinates are, read about them on the web or in your calculus textbook).
+
+```{r}
+x <- runif(2)
+print(x)
+y <- runif(2)
+print(y)
+sqrt((x^2)+(y^2))
+atan(y/x)
+
+```
+
+4. Suppose that queue <- c("sheep", "fox", "owl", "ant") and that queue represents the animals that are lined up to enter Noah’s Ark, with the sheep at the front of the line. Using R expressions, update the queue successively as
+
+```{r}
+queue <- c("sheep","fox","owl","ant")
+queue
+queue2 <- append(queue, "serpent", after = 4)
+queue2
+queue3 <- queue2[-c(1)]
+queue3
+queue4 <-append(queue3, "donkey", after = 0)
+queue4
+queue5 <- queue4[-c(5)]
+queue5
+queue6 <- queue5[-c(3)]
+queue6
+queue7 <- append(queue6, "aphid", after = 2)
+queue7
+which(queue7 == "aphid")
+```
+
+5.Use R to create a vector of all of the integers from 1 to 100 that are not divisible by 2, 3, or 7.
+
+```{r}
+q <- seq_len(100)
+d <- q[q%%2==0]
+e <- d[d%%3==0]
+f <- e[e%%7==0]
+f
+```
+
+6. Create a vector z of 1000 random uniform numbers.
+  create a vector that contains 3 numbers: the proportion of the numbers in z that are less than 0.10, greater than 0.90, and between 0.45 and 0.55.
+
+```{r}
+z <- runif(1000)
+myVec <- c(length(which(z<0.10)), length(which(z>0.90)), length(which((z>0.45)&(z<0.55))))
+myVec
+```
+  Making successive copies of z, transform your vector of uniform numbers in the following ways
+
+```{r}
+z1 <- log10(z)
+z2 <- z^2
+z3 <- exp(z)
+z4 <- sqrt(z)
+```
+
+for each case calculate your vector of 3 numbers to get the new proportions.
+
+```{r}
+myVec2 <- c(length(which(z1<0.10)), length(which(z1>0.90)), length(which((z1>0.45)&(z1<0.55))))
+myVec2
+myVec3 <- c(length(which(z2<0.10)), length(which(z2>0.90)), length(which((z2>0.45)&(z2<0.55))))
+myVec3
+myVec4 <- c(length(which(z3<0.10)), length(which(z3>0.90)), length(which((z3>0.45)&(z3<0.55))))
+myVec4
+myVec5 <- c(length(which(z4<0.10)), length(which(z4>0.90)), length(which((z4>0.45)&(z4<0.55))))
+myVec5
+```
+     
+      
+      
