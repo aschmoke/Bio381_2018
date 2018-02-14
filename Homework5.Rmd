@@ -7,7 +7,7 @@ output:
     highlight: tango
     theme: cerulean
 ---
-1. The primary reason for using Excel to set up data frames is that people like to have the columns aligned. However, if there are not too many columns, it may be faster to do the job in a plain text editor first and align the columns with tabs. In your text editor, type in (or copy and paste from here) the following lines of text:
+1. The primary reason for using Excel to set up data frames is that people like to have the columns aligned. However, if there are not too many columns, it may be faster to do the job in a plain text editor first and align the columns with tabs. In your text editor, type in (or copy and paste from here) the following lines of text
 
 ```
 STRING:
