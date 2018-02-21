@@ -1,0 +1,155 @@
+---
+title: "Homework6"
+author: "Anna Schmoker"
+date: "2/21/2018"
+output: 
+  html_document: 
+    highlight: tango
+    theme: cerulean
+---
+## Reading actual data
+
+```{r}
+z <- read.table("TestDataSet_CrkLSH2screen_Score.csv",header=TRUE,sep=",", stringsAsFactors=FALSE)
+str(z)
+summary(z)
+head(z)
+```
+
+## Opening Libraries
+
+```{r}
+library(ggplot2) # for graphics
+library(MASS) # for maximum likelihood estimation
+```
+
+## Plotting my data
+
+```{r}
+p1 <- ggplot(data=z, aes(x=Score, y=..density..)) +
+  geom_histogram(color="turquoise4",fill="turquoise",size=0.2) 
+print(p1)
+```
+
+## Add an empirical density curve
+
+```{r}
+p1 <-  p1 +  geom_density(linetype="dotted",size=0.75)
+print(p1)
+```
+
+## Get maximum likelihood parameters
+
+```{r}
+normPars <- fitdistr(z$Score,"normal")
+print(normPars)
+```
+
+```{r}
+str(normPars)
+```
+
+```{r}
+normPars$estimate["mean"] # note structure of getting a named attribute
+```
+
+## Plot normal probability density
+
+```{r}
+meanML <- normPars$estimate["mean"]
+sdML <- normPars$estimate["sd"]
+
+xval <- seq(0,max(z$Score),len=length(z$Score))
+
+ stat <- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour="red", n = length(z$Score), args = list(mean = meanML, sd = sdML))
+ p1 + stat
+```
+
+Not a great fit...
+
+## Plot exponential probability density
+
+```{r}
+expoPars <- fitdistr(z$Score,"exponential")
+rateML <- expoPars$estimate["rate"]
+
+stat2 <- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour="blue", n = length(z$Score), args = list(rate=rateML))
+ p1 + stat + stat2
+```
+
+...better, in a way
+
+## Plot uniform probability density
+
+```{r}
+stat3 <- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour="darkgreen", n = length(z$Score), args = list(min=min(z$Score), max=max(z$Score)))
+ p1 + stat + stat2 + stat3
+```
+
+
+## Plot gamma probability density
+
+```{r}
+z2 <- z[z$Score>0,]
+gammaPars <- fitdistr(z2$Score,"gamma")
+shapeML <- gammaPars$estimate["shape"]
+rateML <- gammaPars$estimate["rate"]
+
+stat4 <- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour="brown", n = length(z2$Score), args = list(shape=shapeML, rate=rateML))
+ p1 + stat + stat2 + stat3 + stat4
+```
+
+
+## Plot beta probability density
+
+```{r}
+pSpecial <- ggplot(data=z, aes(x=Score/(max(Score + 0.1)), y=..density..)) +
+  geom_histogram(color="grey60",fill="cornsilk",size=0.2) + 
+  xlim(c(0,1)) +
+  geom_density(size=0.75,linetype="dotted")
+
+betaPars <- fitdistr(x=z2$Score/max(z2$Score + 0.1),start=list(shape1=1,shape2=2),"beta")
+shape1ML <- betaPars$estimate["shape1"]
+shape2ML <- betaPars$estimate["shape2"]
+
+statSpecial <- stat_function(aes(x = xval, y = ..y..), fun = dbeta, colour="orchid", n = length(z2$Score), args = list(shape1=shape1ML,shape2=shape2ML))
+pSpecial + statSpecial
+```
+
+```{r}
+normPars$loglik
+gammaPars$loglik
+expoPars$loglik
+```
+
+Although not a great fit, the exponential fit wins today
+
+## Extracting the maximum likelihood params from the exponential fit
+
+```{r}
+expoPars
+```
+
+## Simulating new data -- Exponential
+
+```{r}
+x <- rexp(n=8887,rate=2.52)
+x <- data.frame(1:8887,x)
+names(x) <- list("density","Score")
+str(x)
+```
+
+```{r}
+summary(x$Score)
+```
+
+```{r}
+p2 <- ggplot(data=x, aes(x=Score, y=..density..)) +
+  geom_histogram(color="grey60",fill="cornsilk") 
+p2 + stat2
+p1 + stat2
+```
+
+# How do the plots compare?
+
+Not very well. My data was somewhat bimodal, and not a great fit for any of these distributions. I think this is due to the nature of the data, itself, which I don't think is necessarily able to be simulated. I think about other data types that I have collected that may be better to use for this exercise and return to it.
