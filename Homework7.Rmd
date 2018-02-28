@@ -1,0 +1,180 @@
+---
+title: "Homework 7"
+author: "Anna Schmoker"
+date: "2/28/2018"
+output: 
+  html_document: 
+    highlight: tango
+    theme: cerulean
+---
+# Creating a fake data set
+
+Aim: detect quantify differences in the phosphorylation state of DCBLD2 tyrosines in YXXP motifs with various tyrosine (Y) to phenylalanine (F) mutants.
+
+Background: DCBLD2 possesses seven YXXP motifs, which are each to a variable degree substrates of the tyrosine kinases Fyn and Abl. Phosphorylation of tyrosine residues in YXXP motifs are required for additional proteins to bind to DCBLD2. This study aims to determine whether phosphorylation of certain sites are required prior to the phosphorylation of additional sites. For example, this could be case if a certain kinase at the membrane phosphorylated a specific site (or sites), which was required for a cytoplasmic kinase to bind. The cytoplasmic kinase could phosphorylate different YXXP sites that then induced the binding of an effector molecule.
+
+Hypothesis: Phosphorylation of certain YXXP sites are required for the phosphorylation of other YXXP sites.
+
+Method: Express DCBLD2-Y750F (Y-to-F mutation of a single YXXP tyrosine) in HEK 293 cells in kinase activated conditions, immunoprecipitate DCBLD2 and separate IP'ed proteins via SDS-PAGE, prepare DCBLD2 band for LC-MS/MS to detect peptides encompassing YXXP tyrosine residues.
+
+--> let's start by looking at the non-YXXP, but highly phosphorylated, tyrosine Y715 in Abl activated conditions.
+
+```{r}
+library(ggplot2)
+nGroup <- 3
+nName <- c("NT DCBLD2 WT", "NT DCBLD2-Y750F", "Abl DCBLD2 WT", "Abl DCBLD2-Y750F")
+nSize <- c(3,3,3,3)
+nMean <- c(0,0,1.1,0.82)
+nSD <- c(0.05,0.05,0.30,0.30)
+ID <- 1:(sum(nSize))
+
+resVar <- c(rnorm(n=nSize[1],mean=nMean[1],sd=nSD[1]),
+            rnorm(n=nSize[2],mean=nMean[2],sd=nSD[2]),
+            rnorm(n=nSize[3],mean=nMean[3],sd=nSD[3]),
+            rnorm(n=nSize[4],mean=nMean[4],sd=nSD[4]))
+
+
+TGroup <- rep(nName,nSize)
+
+ANOdata <- data.frame(ID,TGroup,resVar)
+
+str(ANOdata)
+head(ANOdata) # looks good
+
+ANOmodel <- aov(resVar~TGroup,data=ANOdata)
+print(ANOmodel)
+summary(ANOmodel) # significant p-value
+
+ANOPlot <- ggplot(data=ANOdata,
+                  aes(x=TGroup,y=resVar,fill=TGroup)) +
+                  geom_boxplot()
+  
+print(ANOPlot)
+```
+
+Try in the form of a function...
+
+```{r}
+
+dataCreate <- function(m1=0,m2=0,m3=1.1,m4=0.82,n1=3,n2=3,n3=3,n4=3,sd1=0.05,sd2=0.05,sd3=0.30,sd4=0.30){
+  dataFr <- data.frame(Control1=rnorm(mean=m1,n=n1,sd=sd1),
+                       Control2=rnorm(mean=m2,n=n2,sd=sd2),
+                       Treat1=rnorm(mean=m3,n=n3,sd=sd3),
+                       Treat2=rnorm(mean=m4,n=n4,sd=sd4))
+  return(dataFr)
+}
+
+dataSave <- dataCreate()
+head(dataSave)
+
+library(reshape2)
+melt(dataSave)
+
+dataNew <- melt(dataSave)
+  
+ANOmodel2 <- aov(value~variable,data=dataNew)
+summary(ANOmodel2) #  p-value fluctuates a lot...probably the small sample size
+print(ANOmodel2)
+
+ANOPlot2 <- ggplot(data=dataNew,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+
+print(ANOPlot2)
+
+```
+
+Running the test multiple times, the results fluctuate quite a lot, most likely due to the small sample size.
+
+### Adjusting the means
+```{r }
+dataSave2 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.36)
+head(dataSave2)
+
+melt(dataSave2)
+
+dataNew2 <- melt(dataSave2)
+
+ANOmodel3 <- aov(value~variable,data=dataNew2)
+summary(ANOmodel3) #  p-value not significant
+print(ANOmodel3)
+
+ANOPlot3 <- ggplot(data=dataNew2,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+
+print(ANOPlot3)
+```
+
+Increasing mean of Treat2 to get a significant p-value
+
+```{r }
+dataSave3 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.47)
+head(dataSave3)
+
+melt(dataSave3)
+
+dataNew3 <- melt(dataSave3)
+
+ANOmodel4 <- aov(value~variable,data=dataNew3)
+summary(ANOmodel4) #  p-value mostly significant over multiple runs, but not stably significant
+print(ANOmodel4)
+
+ANOPlot4 <- ggplot(data=dataNew3,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+
+print(ANOPlot4)
+```
+
+Increasing mean of Treat2 a bit more...
+
+```{r }
+dataSave4 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.53)
+head(dataSave4)
+
+melt(dataSave4)
+
+dataNew4 <- melt(dataSave4)
+
+ANOmodel5 <- aov(value~variable,data=dataNew4)
+summary(ANOmodel5) #  p-value still not stably significant
+print(ANOmodel5)
+
+ANOPlot5 <- ggplot(data=dataNew4,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+
+print(ANOPlot5)
+```
+
+Increasing mean of Treat2 even more...
+
+```{r }
+dataSave5 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.59)
+head(dataSave5)
+
+melt(dataSave5)
+
+dataNew6 <- melt(dataSave5)
+
+ANOmodel6 <- aov(value~variable,data=dataNew5)
+summary(ANOmodel6) #  p-value now seems stable
+print(ANOmodel6)
+
+ANOPlot6 <- ggplot(data=dataNew5,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+
+print(ANOPlot6)
+```
+
+p-value now seems stable, however, we could probably get a smaller difference in means with a sig. p-value by increasing the sample size...let's try.
+
+```{r }
+dataSave6 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.36,n1=11,n2=10,n3=15,n4=14)
+head(dataSave6)
+
+melt(dataSave6)
+
+dataNew6 <- melt(dataSave6)
+
+ANOmodel7 <- aov(value~variable,data=dataNew6)
+summary(ANOmodel7) #  p-value is very stable
+print(ANOmodel7)
+
+ANOPlot7 <- ggplot(data=dataNew6,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+
+print(ANOPlot7)
+```
+

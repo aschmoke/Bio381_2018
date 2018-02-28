@@ -14,6 +14,6 @@ output:
 [Homework 3](Homework_3.pdf)   
 [Homework 4](Homework4.html)   
 [Homework 5](Homework5.html)  
-[Homework 6](Homework6.html)
-
+[Homework 6](Homework6.html)   
+[Homework 7](Homework7.html)   
 
