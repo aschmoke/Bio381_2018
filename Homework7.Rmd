@@ -6,6 +6,8 @@ output:
   html_document: 
     highlight: tango
     theme: cerulean
+editor_options: 
+  chunk_output_type: console
 ---
 # Creating a fake data set
 
@@ -85,7 +87,6 @@ print(ANOPlot2)
 Running the test multiple times, the results fluctuate quite a lot, most likely due to the small sample size.
 
 ### Adjusting the means
-
 ```{r }
 dataSave2 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.36)
 head(dataSave2)
@@ -160,10 +161,13 @@ ANOPlot6 <- ggplot(data=dataNew5,aes(x=variable,y=value,fill=variable)) + geom_b
 print(ANOPlot6)
 ```
 
-p-value now seems stable, however, we could probably get a smaller difference in means with a sig. p-value by increasing the sample size...let's try.
+p-value now seems stable (effect size ~0.5 for these types of measurements/samples), however, we could probably get a smaller difference in means with a sig. p-value by increasing the sample size.
+
+What is the minimum sample size needed to get a significant p-value with the original hypothesized means?
+  --> Try sample size of 2...not a strong sample size, but sample size in original function was only 3.
 
 ```{r }
-dataSave6 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.36,n1=11,n2=10,n3=15,n4=14)
+dataSave6 <- dataCreate(n1=2,n2=2,n3=2,n4=2)
 head(dataSave6)
 
 melt(dataSave6)
@@ -179,3 +183,62 @@ ANOPlot7 <- ggplot(data=dataNew6,aes(x=variable,y=value,fill=variable)) + geom_b
 print(ANOPlot7)
 ```
 
+The majority of random number sets generate a significant p-value, but I do get the occasional p > 0.05, so, it seems that n=3 is the lowest I can go (although it would be better to have n > 3).
+
+Let's try a logistic regression with Control1 and Treat1
+
+```{r }
+dataCreateX <- function(m1=0,m2=1,n1=3,n2=3,sd1=0.05,sd2=0.30){
+  dataFrX <- data.frame("0"=rnorm(mean=m1,n=n1,sd=sd1),
+                       "1"=rnorm(mean=m2,n=n2,sd=sd2))
+  return(dataFrX)
+}
+
+dataSaveX <- dataCreateX()
+head(dataSaveX)
+summary(dataSaveX)
+
+melt(dataSaveX)
+dataNewX <- melt(dataSaveX)
+class(dataNewX$variable)
+dataNewX$Cat<-ifelse(dataNewX$variable == "X0", 0, 1) # very nice!
+# as.factor(dataNewX$Cat)
+
+myLogis <- lm(Cat~value,data=dataNewX,family="binomial")
+summary(myLogis)
+print(myLogis)
+
+
+myLogisPlot <- ggplot(data=dataNewX,aes(x=value,y=Cat,fill=value)) + geom_point() + stat_smooth(method="glm",method.args=list(family="binomial"),se=FALSE)
+
+print(myLogisPlot)
+```
+
+Try with a larger sample size
+
+```{r }
+dataCreateZ <- function(m1=0.3,m2=1.1,n1=12,n2=12,sd1=0.05,sd2=0.30){
+  dataFrZ <- data.frame("0"=rnorm(mean=m1,n=n1,sd=sd1),
+                       "1"=rnorm(mean=m2,n=n2,sd=sd2))
+  return(dataFrZ)
+}
+
+dataSaveZ <- dataCreateZ()
+head(dataSaveZ)
+summary(dataSaveZ)
+
+melt(dataSaveZ)
+dataNewZ <- melt(dataSaveZ)
+class(dataNewZ$variable)
+dataNewZ$Cat<-ifelse(dataNewZ$variable == "X0", 0, 1)
+# as.factor(dataNewZ$Cat)
+
+myLogis2 <- lm(Cat~value,data=dataNewZ,family="binomial")
+summary(myLogis2)
+print(myLogis2)
+
+
+myLogisPlot2 <- ggplot(data=dataNewZ,aes(x=value,y=Cat,fill=value)) + geom_point() + stat_smooth(method="glm",method.args=list(family="binomial"),se=FALSE)
+
+print(myLogisPlot2)
+```
