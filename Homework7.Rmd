@@ -85,6 +85,7 @@ print(ANOPlot2)
 Running the test multiple times, the results fluctuate quite a lot, most likely due to the small sample size.
 
 ### Adjusting the means
+
 ```{r }
 dataSave2 <- dataCreate(m1=0,m2=0,m3=0.5,m4=0.36)
 head(dataSave2)
@@ -148,7 +149,7 @@ head(dataSave5)
 
 melt(dataSave5)
 
-dataNew6 <- melt(dataSave5)
+dataNew5 <- melt(dataSave5)
 
 ANOmodel6 <- aov(value~variable,data=dataNew5)
 summary(ANOmodel6) #  p-value now seems stable
