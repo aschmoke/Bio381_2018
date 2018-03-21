@@ -1,0 +1,115 @@
+---
+title: "Homework8"
+author: "Anna Schmoker"
+date: "3/21/2018"
+output: 
+  html_document: 
+    highlight: tango
+    theme: cerulean
+---
+Structured programming   
+  rewriting Homework 7  
+
+1. Call libraries
+2. Write functions
+3. Use functions
+
+```{r}
+library(ggplot2)
+library(reshape2)
+####################################################
+# Function: CreateData
+# Create a dataset
+# input: mean, sample size, and standard deviation of conditions 1-4
+# output: y
+#---------------------------------------------------
+CreateData <- function(m1=0,m2=0,m3=1.1,m4=0.82,n1=3,n2=3,n3=3,n4=3,sd1=0.05,sd2=0.05,sd3=0.30,sd4=0.30) {
+  dataFrame <- data.frame(Control1=round(rnorm(mean=m1,n=n1,sd=sd1),3),
+                       Control2=round(rnorm(mean=m2,n=n2,sd=sd2),3),
+                       Treat1=round(rnorm(mean=m3,n=n3,sd=sd3),3),
+                       Treat2=round(rnorm(mean=m4,n=n4,sd=sd4),3))
+  return(dataFrame)
+}
+# CreateData()
+####################################################
+# Function: ChangeFrame
+# melt and save data for ANOVA test
+# input: CreateData
+# output: melted data
+#---------------------------------------------------
+ChangeFrame <- function() {
+  dataSave <- CreateData()
+  dataNew <- melt(dataSave)
+  return(dataNew)
+}
+# ChangeFrame()
+####################################################
+# Function: ANOVAfit
+# Fit to AOV model
+# input: melted data
+# output: p-value
+#---------------------------------------------------
+ANOVAfit <- function() {
+  melt <- ChangeFrame()
+  anoModel <- aov(value~variable, data=melt)
+  pVal <- summary(anoModel)[[1]][["Pr(>F)"]][[1]]
+  return(pVal)
+}
+# ANOVAfit()
+####################################################
+# Function: ANOVAplot
+# graph results
+# input: ChangeFrame
+# output: plot
+#---------------------------------------------------
+ANOVAplot <- function() {
+  p1 <-  ggplot(data=melt,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
+  return(print(p1))
+}
+# ANOVAplot()
+####################################################
+
+CreateData()
+ChangeFrame()
+ANOVAfit()
+ANOVAplot()
+```
+
+Now, let's try creating a forloop to run this code 100 times. output = p-values
+
+```{r}
+loop <- 1000
+myvec <- vector(mode="numeric")
+####################################################
+# Function: ANOVAall
+# create one function that creates data, melts it, and conducts an ANOVA
+# input: first three functions
+# output: p-value
+#---------------------------------------------------
+ANOVAall<- function() {
+  CreateData()
+  ChangeFrame()
+  ANOVAfit()
+  pVal2 <- ANOVAfit()
+  return(pVal2)
+}
+# ANOVAall()
+####################################################
+# Function: ANOVAloop
+# do ANOVAall as many times as we want!
+# input: first three functions
+# output: number of significant p-values
+#---------------------------------------------------
+ANOVAloop<- function() {
+  for(i in seq_len(loop)){
+  myDat <- ANOVAall()
+  myvec[i]<-myDat
+}
+  return(sum(myvec<0.05))
+}
+# ANOVAloop()
+####################################################
+ANOVAloop()
+```
+
+999 in 1000 runs were significant! Cool
