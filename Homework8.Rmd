@@ -2,10 +2,7 @@
 title: "Homework8"
 author: "Anna Schmoker"
 date: "3/21/2018"
-output: 
-  html_document: 
-    highlight: tango
-    theme: cerulean
+output: html_document
 ---
 Structured programming   
   rewriting Homework 7  
@@ -64,7 +61,6 @@ ANOVAfit <- function() {
 # output: plot
 #---------------------------------------------------
 ANOVAplot <- function() {
-  melt <- ChangeFrame()
   p1 <-  ggplot(data=melt,aes(x=variable,y=value,fill=variable)) + geom_boxplot()
   return(print(p1))
 }
@@ -114,3 +110,4 @@ ANOVAloop<- function() {
 ANOVAloop()
 ```
 
+999 in 1000 runs were significant! Cool
