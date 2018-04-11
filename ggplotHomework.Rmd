@@ -30,7 +30,7 @@ p1
 
 ###Changing theme, font and binwidth
 
-```{r}
+```{r,warning=FALSE}
 p1 <- ggplot(data=d,mapping=aes(x=PriorityScore,fill=I("turquoise"),color=I("turquoise4"))) +
   geom_histogram(binwidth=0.5) + 
   theme_classic(base_size=15)
@@ -39,7 +39,7 @@ p1
 
 ###Adding color to another variable in the dataset
 
-```{r}
+```{r,warning=FALSE}
 p1 <- ggplot(data=d,mapping=aes(x=PriorityScore,fill=Interactome,color=I("turquoise4"))) +
   geom_histogram(binwidth=0.5) + 
   theme_classic(base_size=20)
@@ -48,7 +48,7 @@ p1
 
 ###Changing axis labels
 
-```{r}
+```{r,warning=FALSE}
 p1 + theme(axis.text.x= element_blank()) +
   theme(axis.text.y= element_blank())
 
@@ -65,7 +65,7 @@ p1a
 
 ###Scale axes
 
-```{r}
+```{r,warning=FALSE}
 p1b <- p1 + theme(axis.title.x=element_blank(),
         axis.text.x= element_text(face="bold",angle=45)) +
   theme(axis.title.y=element_blank(),
@@ -79,7 +79,7 @@ p1b
 
 ###Adding an inset
 
-```{r}
+```{r,warning=FALSE}
 vpa <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)
 vpb <- viewport(width = 0.4, height = 0.4, x = 0.8, y = 0.8)
 vp <- viewport(width = 0.4, height = 0.4,x=1,y=1,just = c("right",
