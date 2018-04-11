@@ -1,0 +1,96 @@
+---
+title: "ggplotHomework"
+author: "Anna Schmoker"
+date: "4/11/2018"
+output: html_document
+---
+## Playing around with ggplot2
+
+###Preliminaries, getting data into R
+
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(patchwork)
+library(TeachingDemos)
+library(grid)
+
+d <- read.table(file="BioinformaticsPaperData.csv",header=TRUE,sep=",")
+head(d)
+
+```
+
+###Take a first look at the data
+
+```{r,warning=FALSE}
+p1 <- ggplot(data=d,mapping=aes(x=PriorityScore,fill=I("turquoise"),color=I("turquoise4"))) +
+  geom_histogram()
+p1
+```
+
+###Changing theme, font and binwidth
+
+```{r}
+p1 <- ggplot(data=d,mapping=aes(x=PriorityScore,fill=I("turquoise"),color=I("turquoise4"))) +
+  geom_histogram(binwidth=0.5) + 
+  theme_classic(base_size=15)
+p1
+```
+
+###Adding color to another variable in the dataset
+
+```{r}
+p1 <- ggplot(data=d,mapping=aes(x=PriorityScore,fill=Interactome,color=I("turquoise4"))) +
+  geom_histogram(binwidth=0.5) + 
+  theme_classic(base_size=20)
+p1
+```
+
+###Changing axis labels
+
+```{r}
+p1 + theme(axis.text.x= element_blank()) +
+  theme(axis.text.y= element_blank())
+
+p1 + theme(axis.text.x= element_text(face="bold",angle=45)) +
+  theme(axis.text.y= element_text(face="bold")) +
+  theme(axis.line = element_line(colour="darkblue"))
+
+p1a <- p1 + theme(axis.text.x= element_text(face="bold",angle=45)) +
+  theme(axis.text.y= element_text(face="bold")) +
+  scale_x_continuous(name="Priority Score") +
+  scale_y_continuous(name="Protein Count")
+p1a
+```
+
+###Scale axes
+
+```{r}
+p1b <- p1 + theme(axis.title.x=element_blank(),
+        axis.text.x= element_text(face="bold",angle=45)) +
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  scale_x_continuous(limits=c(3.5,12))
+
+
+p1b
+```
+
+###Adding an inset
+
+```{r}
+vpa <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)
+vpb <- viewport(width = 0.4, height = 0.4, x = 0.8, y = 0.8)
+vp <- viewport(width = 0.4, height = 0.4,x=1,y=1,just = c("right",
+         "bottom"))
+
+insetPlot <- function(){
+  print(p1a,vp=vpa)
+  print(p1b,vp=vpb)
+}
+
+insetPlot()
+```
+
+
