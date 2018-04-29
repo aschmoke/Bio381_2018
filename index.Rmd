@@ -1,23 +1,58 @@
 ---
 title: "Bio 381 Webpage"
 author: "Anna Schmoker"
-date: "January 24 2018"
+date: "Started January 24 2018"
 output: 
   html_document: 
     highlight: tango
     theme: flatly
 ---
 
-### Assignments
+# Assignments
 
+###Homework 1   
+Set up webpage & send Slack message
+
+###Homework 2   
 [Homework 2](Homework2.html)   
-[Homework 3](Homework_3.pdf)   
+
+###Homework 3   
+[Homework 3](Homework_3.pdf)  
+
+###Homework 4   
 [Homework 4](Homework4.html)   
+
+###Homework 5   
 [Homework 5](Homework5.html)  
+
+###Homework 6   
 [Homework 6](Homework6.html)   
+
+###Homework 7 & 8  
 [Homework 7 & 8](Homework7.html)    
+
+###Homework 9  
 [Homework 9](Homework_8.html)   
+
+###Homework 10   
 [Homework 10](Homework10.html)   
+
+###Homework 11   
 [Homework 11](Homework11.html)   
+
+###Homework ggplot2   
 [ggplot2Homework](ggplotHomework.html)
 
+###Final Presentation: Data filtering and analysis in R
+[R Markdown file](Data_filtering_and_analysis_in_R.html)   
+
+```{r,include=FALSE}
+#write.csv2(mtcars, "SampleData.csv")
+
+library(magrittr)
+readLines("SampleData.csv") %>% 
+  paste0(collapse="\n") %>% 
+  openssl::base64_encode() -> encoded
+```
+
+[Download Sample Data](`r sprintf('data:text/csv;base64,%s', encoded)`)

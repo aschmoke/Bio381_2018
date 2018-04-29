@@ -1,0 +1,149 @@
+---
+title: "Data filtering and analysis in R"
+author: "Anna Schmoker"
+date: "4/29/2018"
+output: 
+  html_document: 
+    highlight: pygments
+    theme: flatly
+---
+Make sure you have downloaded the **SampleData.csv** file from the homepage <https://aschmoke.github.io/Bio381_2018/>.
+
+We will be using the following R packages:   
+`plyr`
+`ggplot2`
+`ggrepel`
+`patchwork`
+`reshape2`
+
+We will be working through some data filtration and analysis problems using a proteomics sample dataset.
+
+###Preliminaries
+```{r}
+library(plyr)
+library(ggplot2)
+library(patchwork)
+library(ggrepel)
+library(reshape2)
+```
+
+###Getting your dataset into R
+
+Some problems I ran in to:
+- I have some funky characters in my datasets denoting post-translational modifications. One of these was `#` which, as we know, tells R not to read what comes next. I fixed this by opening the file in **BBedit** and using the find-and-replace tool to convert all `#` to `+`.
+- In order to complete some of the filters below, make sure you have 1 column with a single unique identifier for each experimental condition, as well as another with a unique identifier for each row in the dataset.
+
+```{r,results='hide'}
+# Read the file
+d <- read.table(file="SampleData.csv",header=TRUE,sep=",")
+
+# take a look at it to ensure R is reading the entire file
+head(d)
+# tail(d)
+str(d)
+```
+
+###Get some basic stats on the data
+```{r}
+# number of rows (peptides) per experimental condition
+# A = control
+# B = experimental
+table(d$SampleID)
+
+# number of genes (some proteins don't have a "gene symbol"
+length(unique(d$GeneSymbol))
+
+# Number of unique proteins
+length(unique(d$Reference))
+```
+
+Take the heavy-to-light ratio out of Log2 space
+```{r,results='hide'}
+# Create a new column
+# Calculate value based on another value in an existing column
+d$Ratio <- with(d, 2^Log2Ratio)
+head(d)
+
+# Change number of digits after the decimal
+d$Ratio <- round(d$Ratio,4)
+head(d)
+```
+
+###Subsetting all peptides that meet certain criteria
+Require a signal-to-noise ratio > 20
+```{r}
+# We need a unique row!
+d$Row <- with(d, 1:nrow(d))
+
+# Create a subset of the data that excludes any peptides with a "SumSN" less than 20
+# make sure you reference a row with a unique identifier here, otherwise duplicates will be removed
+# "create a subset of d, excluding any rows with a unique "Row" designation that has a "SumSN" value less than 20
+dSN <- subset(d,!Row %in% Row[SumSN < 20])
+
+# Get new stats
+table(dSN$SampleID)
+length(unique(dSN$GeneSymbol))
+length(unique(dSN$Reference))
+```
+
+###Summarize peptide information for each protein
+Create a new dataset and summarize using `ddply()` with the `plyr` package
+```{r}
+# Create new dataset from dSN that includes the following
+# Reference (existing)
+# SampleID (existing)
+# GeneSymbol (existing)
+# Count = number of peptides per protein
+# MeanFC = average H:L Ratio
+# StDev = stand deviation H:L Ratio
+dMean <- ddply(dSN,.(Reference,SampleID,GeneSymbol),
+               summarize,
+               Count=length(Reference),
+               MeanFC=mean(Ratio),
+               StDev=sd(Ratio))
+# number of rows and columns
+dim(dMean)
+```
+```{r, results='hide'}
+# take a look at the data
+head(dMean)
+```
+```{r}
+# number of proteins
+# before
+length(unique(dSN$Reference))
+# and after
+length(unique(dMean$Reference))
+# they are the same! Good
+```
+
+Now that we have a column with the number of peptides identified per protein, we can filter based on that stat
+```{r}
+# We subset again!
+
+dFilt <- subset(dMean,!Reference %in% Reference[Count<3]) # subset excluding proteins identified by less than 3 peptides
+dim(dFilt)
+length(unique(dFilt$Reference))
+```
+
+Filter out all proteins in the control, unless "Count" is 5X higher in the experimental group
+
+```{r}
+
+```
+
+With an average Ratio for each protein, we can normalize to a loading control
+
+```{r}
+# First we need to find the Ratio for our loading control
+# Save the Prkaca "Ratio" in "norm"
+norm <- dFilt$MeanFC[dFilt$GeneSymbol=="Prkaca"]
+norm
+```
+```{r,results='hide'}
+# Now we can create a new column in the dFilt data frame with a mean fold change (Ratio) normalized to that of Prkaca, our loading control
+dFilt$FCnorm <- with(dFilt, MeanFC/norm)
+head(dFilt)
+```
+
+With a normalized fold change and standard deviation, we can get a p-value for each Prkaca binding partner to see if 
