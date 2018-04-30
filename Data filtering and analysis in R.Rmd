@@ -126,10 +126,44 @@ dim(dFilt)
 length(unique(dFilt$Reference))
 ```
 
-Filter out all proteins in the control, unless "Count" is 5X higher in the experimental group
+
+###Remove proteins in control
+Filter out all proteins in the control, unless "Count" is 5X higher in the experimental group.
+1. subset so only those with both A and B 
+2. divide B by A
+3. subset those that have > 5 in column
+4. rbind just distinct B's and B's greater than 5X their As
+5. Subset data with As removed based on large Bs
 
 ```{r}
+# Reshape into 'wide' format for easier manipulation
+dFiltWide<-dcast(dFilt, Reference ~ SampleID, value.var = "Count")
 
+# Extract those that have both A and B in Sample column
+dFiltAB<-dFiltWide[which(complete.cases(dFiltWide)),]
+
+# Create column that divides Sample B by A
+dFiltAB$mag<-dFiltAB$B/dFiltAB$A
+
+# Subset only those where B is at least 5 times greater than A
+dFiltLargeB<-subset(dFiltAB, dFiltAB$mag>=5)
+
+# Get names of those with either A or B
+dFiltAorB<-dFiltWide[which(!complete.cases(dFiltWide)),]
+
+# Subset only B samples
+dFiltBs<-subset(dFiltAorB, dFiltAorB$B != "NA")
+
+# Create a data frame that have References with either only B or where B > 5x A
+namesToSubset<-data.frame(Names=c(as.character(dFiltLargeB$Reference), as.character(dFiltBs$Reference)))
+
+dFilt$Reference<-as.character(dFilt$Reference)
+
+# Subset original data to only include References that have B samples
+dFiltBs<-subset(dFilt, dFilt$Sample=="B")
+dFiltNew<-subset(dFiltBs, dFiltBs$Reference %in% namesToSubset$Names)
+
+head(dFiltNew)
 ```
 
 With an average Ratio for each protein, we can normalize to a loading control
@@ -137,13 +171,116 @@ With an average Ratio for each protein, we can normalize to a loading control
 ```{r}
 # First we need to find the Ratio for our loading control
 # Save the Prkaca "Ratio" in "norm"
-norm <- dFilt$MeanFC[dFilt$GeneSymbol=="Prkaca"]
+norm <- dFiltNew$MeanFC[dFiltNew$GeneSymbol=="Prkaca"]
 norm
 ```
 ```{r,results='hide'}
 # Now we can create a new column in the dFilt data frame with a mean fold change (Ratio) normalized to that of Prkaca, our loading control
-dFilt$FCnorm <- with(dFilt, MeanFC/norm)
-head(dFilt)
+dFiltNew$FCnorm <- with(dFiltNew, MeanFC/norm)
+head(dFiltNew)
 ```
 
-With a normalized fold change and standard deviation, we can get a p-value for each Prkaca binding partner to see if 
+###Get a p-value & FDR for each binding partner
+With a normalized fold change and standard deviation, we can get a p-value for each Prkaca binding partner to determine which proteins have a H:L Ratio that is significantly different from Prkaca.
+
+If you only have two populations to compare, a simple t-test is easy to conduct using the `t.test()` function in R. However, I couldn't figure out a way to use this function to test the mean Ratio in each row against that for Prkaca, so I had to manually calculate this for each row...
+
+```{r}
+# Save Prkaca stats to use in the formula
+mNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","FCnorm"]
+mNorm
+sNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","StDev"]
+sNorm
+nNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","Count"]
+nNorm
+
+# Create a new column for the p-value
+dFiltNew$pVal <- with(dFiltNew,
+                   2*pt(
+                     -abs(
+                       ((FCnorm - mNorm)/
+                          sqrt((((Count-1)*StDev^2 + (nNorm-1)*sNorm^2)/
+                                  (Count+nNorm-2))*(1/Count+1/nNorm)))),
+                     (Count + nNorm - 2)),lower=FALSE)
+# pt() gives the probability distribution of the student t dist
+```
+
+Calculate FDR and make other adjustments
+```{r}
+# Adjust p-value for multiple calculations
+dFiltNew$FDR <- p.adjust(dFiltNew$pVal,method="BH")
+
+# Log2-transform the normalized fold change
+dFiltNew$Log2FCnorm <- with(dFiltNew, log(FCnorm,2)) 
+
+# Log10-transform the FDR (for data visualization)
+dFiltNew$LogFDR <- with(dFiltNew, -log(FDR,10))
+dim(dFiltNew)
+```
+
+###Create volcano plot to visualize distribution of FDR values and fold change for each protein
+```{r}
+# Create new column to denote which proteins meet a certain threshold
+# Use to highlight those with an absolute fold change > 4 and a p-value < 0.05
+dFiltNew$threshold <- as.factor(abs(dFiltNew$Log2FCnorm) > 2 &
+                                  dFiltNew$FDR < 0.05)
+
+
+# Construct the plot
+p1 <- ggplot(data=dFiltNew, aes(x=Log2FCnorm, y=LogFDR, color=threshold)) +
+  xlim(c(-5, 5)) + ylim(c(0, 21)) +
+  xlab("log2 fold change") + ylab("-log10 FDR") +
+  geom_point(size=1.75) +
+  scale_color_manual(values = c("darkgrey", "red")) +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "none") +
+  geom_text_repel(data=subset(dFiltNew,FDR < 0.05 &
+                                  abs(Log2FCnorm) > 2),
+                    aes(label = GeneSymbol),
+                    size = 2.5,
+                    color="black",
+                    box.padding = unit(0.35, "lines"),
+                    point.padding = unit(0.3, "lines"))
+```
+
+###Create Rank-ordered plot of log2 ratios
+```{r}
+# order rows by Log2-transformed mean fold change
+dFiltNew <- dFiltNew[order(dFiltNew$Log2FCnorm),] 
+
+# add rank order based on Log2Ratio
+dFiltNew$Rank <- with(dFiltNew, 1:nrow(dFiltNew))
+
+
+p2 <- ggplot(data=dFiltNew,mapping=aes(x=Rank,y=Log2FCnorm,color=threshold)) +
+  xlab("Rank") + ylab("log2 fold change") +
+  geom_point(size=1.75) +
+  scale_color_manual(values = c("darkgrey", "red")) +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "none") +
+  geom_text_repel(data=subset(dFiltNew,FDR < 0.05 &
+                                abs(Log2FCnorm) > 2),
+                  aes(label = GeneSymbol),
+                  size = 2.5,
+                  color="black",
+                  box.padding = unit(0.35, "lines"),
+                  point.padding = unit(0.3, "lines"))
+```
+
+###Create histogram of Log2 ratios
+```{r}
+p3 <- ggplot(data=dFiltNew,mapping=aes(Log2FCnorm,fill=I("dodgerblue"), color=I("black"))) +
+  geom_histogram() +
+  theme_bw(base_size = 12)
+```
+
+###Plot together
+```{r}
+
+p3 + {
+  p2 +
+    p1 +
+    plot_layout(nrow=1)
+} +
+  plot_layout(ncol=1)
+```

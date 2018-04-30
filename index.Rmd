@@ -53,6 +53,10 @@ library(magrittr)
 readLines("SampleData.csv") %>% 
   paste0(collapse="\n") %>% 
   openssl::base64_encode() -> encoded
+
+
+
+
 ```
 
 [Download Sample Data](`r sprintf('data:text/csv;base64,%s', encoded)`)

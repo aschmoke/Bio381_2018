@@ -59,7 +59,7 @@ dFilt$FCnorm <- with(dFilt, MeanFC/norm) # Normalize to loading control
 head(dFilt)
 
 
-mNorm <- dFilt[dFilt$GeneSymbol=="Prkaca","MeanFC"]
+mNorm <- dFilt[dFilt$GeneSymbol=="Prkaca","FCnorm"]
 mNorm
 sNorm <- dFilt[dFilt$GeneSymbol=="Prkaca","StDev"]
 sNorm
@@ -67,10 +67,6 @@ nNorm <- dFilt[dFilt$GeneSymbol=="Prkaca","Count"]
 nNorm
 
 # Test t value
-# x <- (0.002303387 - 0.9811636)/
-#  (sqrt(
-#    ((((5-1)*.003600417^2)+((11-1)*0.05001118^2))/
-#      (5+11-2))*(1/5+1/11)))
 
 dFilt$pVal <- with(dFilt,
                    2*pt(
@@ -80,16 +76,11 @@ dFilt$pVal <- with(dFilt,
                                   (Count+nNorm-2))*(1/Count+1/nNorm)))),
                      (Count + nNorm - 2)),lower=FALSE)
 
-# Test FDR
-# d <- dFilt[dFilt$GeneSymbol=="XIRP2","pVal"][1]
-# d
-# p.adjust(d,method="BH")
+# Adjust p-value for multiple calculations
 
 dFilt$FDR <- p.adjust(dFilt$pVal,method="BH")
 head(dFilt)
 
-# dFilt$LogFCnorm <- with(dFilt, log(FCnorm))
-# head(dFilt)
 
 dFilt$Log2FCnorm <- with(dFilt, log(FCnorm,2)) # Log2-transform the normalized fold change
 head(dFilt)
@@ -203,3 +194,7 @@ p2 + {
 } +
   plot_layout(ncol=1)
 
+
+#################
+# Upload onto Slack or Website
+################
