@@ -62,5 +62,3 @@ readBin("SampleData.csv", "raw", file.info("SampleData.csv")$size) %>%
 ```
 
 <a download="SampleData.csv" href="`r sprintf('data:text/csv;base64,%s', encoded)`">Download Sample Data</a>
-
-[Download CSV](`r sprintf('data:text/csv;base64,%s', encoded)`)
