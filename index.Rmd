@@ -57,7 +57,8 @@ readLines("./SampleData.csv") %>%
 #readBin("./SampleData.csv", "raw", file.info("./file.csv")$size) %>% 
 #  openssl::base64_encode() -> encoded
 
-# <a download="SampleData.csv" href="`r sprintf('data:text/csv;base64,%s', encoded)`">Download Sample Data</a>
+# [Download Sample Data](`r sprintf('data:text/csv;base64,%s', encoded)`)
 
 ```
-[Download Sample Data](`r sprintf('data:text/csv;base64,%s', encoded)`)
+
+<a download="./SampleData.csv" href="`r sprintf('data:text/csv;base64,%s', encoded)`">Download Sample Data</a>
