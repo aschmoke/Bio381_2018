@@ -8,6 +8,11 @@ output:
     theme: flatly
 ---
 
+###Final Presentation: Data filtering and analysis in R
+[R Markdown file](Data_filtering_and_analysis_in_R.html)   
+[.Rmd](Data filtering and analysis in R.Rmd)   
+[SampleData.csv](SampleData.csv) 
+
 # Assignments
 
 ###Homework 1   
@@ -43,10 +48,7 @@ Set up webpage & send Slack message
 ###Homework ggplot2   
 [ggplot2Homework](ggplotHomework.html)
 
-###Final Presentation: Data filtering and analysis in R
-[R Markdown file](Data_filtering_and_analysis_in_R.html)   
-[.Rmd](Data filtering and analysis in R.Rmd)   
-[SampleData.csv](SampleData.csv)   
+  
 
 ```{r,include=FALSE}
 #write.csv2(mtcars, "SampleData.csv")
