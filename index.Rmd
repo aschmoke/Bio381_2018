@@ -12,8 +12,6 @@ output:
 [Presentation](Data_filtering_and_analysis_in_R.html)   
 [.Rmd](Data filtering and analysis in R.Rmd)   
 [SampleData.csv](SampleData.csv) 
-[Notes](PresentationNotes.html)
-[.Rmd](PresentationNotes.Rmd)
 
 # Assignments
 
