@@ -34,6 +34,12 @@ tail(d)
 table(d$SampleID)
 length(unique(d$GeneSymbol))
 ```
+###What we need to do
+1. Filters: high S:N, 3 or more peptides, remove proteins present in the control
+2. Normalize H:L ratios to POI, get mean H:L and SD
+3. Get a p-value for each protein (sig. increased/decreased binding)
+4. Summarize
+
 
 Take the heavy-to-light ratio out of Log2 space
 ```{r}
@@ -49,7 +55,7 @@ Require a signal-to-noise ratio > 20
 d$Row <- with(d, 1:nrow(d))
 
 # "create a subset of d, excluding any rows with a unique "Row" designation that has a "SumSN" value less than 20
-dSN <- subset(d,!Row %in% Row[SumSN < 20]) # Don't include Row designations that match Rows with a SunSN < 20
+dSN <- subset(d,!Row %in% Row[SumSN < 20])
 
 table(dSN$SampleID)
 length(unique(dSN$GeneSymbol))
@@ -57,72 +63,73 @@ length(unique(dSN$GeneSymbol))
 
 ###Summarize peptide information for each protein
 Create a new dataset and summarize using `ddply()` with the `plyr` package
-For ddply: "If blank, fill with reference" and add something to show that this isn't the official gene symbol
 ```{r}
-dMean <- ddply(dSN,.(Reference,SampleID,GeneSymbol),
-               summarize,
+# split the data frame
+# apply a function
+# combine results in a new data frame
+dMean <- ddply(dSN,
+               .(Reference,SampleID,GeneSymbol), # variables to split data frame by ("." to indicate variables without quoting)
+               summarize, # summarize the following for each variable group
                Count=length(Reference),
                MeanFC=mean(Ratio),
                StDev=sd(Ratio))
-# number of rows and columns
-head(dMean)
-length(unique(dSN$Reference))
-length(unique(dMean$Reference))
 
-dFilt <- subset(dMean,!Reference %in% Reference[Count<3]) # subset excluding proteins identified by less than 3 peptides
-length(unique(dFilt$Reference))
+head(dMean)
+length(unique(dMean$GeneSymbol))
+
+dFilt <- subset(dMean,!Reference %in% Reference[Count<3])
+length(unique(dFilt$GeneSymbol))
 ```
 
 ###Remove proteins in control
 Filter out all proteins in the control, unless "Count" is 5X higher in the experimental group.
 ```{r}
 # Reshape into 'wide' format for easier manipulation
-dFiltWide<-dcast(dFilt, Reference ~ SampleID, value.var = "Count")
-head(dFiltWide)
-# Extract those that have both A and B in Sample column
-dFiltAB<-dFiltWide[which(complete.cases(dFiltWide)),]
+# Get Counts for each sample ID associated with a given Reference
+dFiltW<-dcast(dFilt, Reference ~ SampleID, value.var = "Count")
+head(dFiltW)
+# Extract rows that have both A and B in Sample column using complete.cases
+dFiltAB<-dFiltW[which(complete.cases(dFiltW)),]
 
 # Create column that divides Sample B by A
 dFiltAB$div<-dFiltAB$B/dFiltAB$A
 
 # Subset only those where B is at least 5 times greater than A
-dFiltLargeB<-subset(dFiltAB, dFiltAB$div>=5)
+dFiltLB<-subset(dFiltAB, dFiltAB$div>=5)
 
 # Get names of those with either A or B
-dFiltAorB<-dFiltWide[which(!complete.cases(dFiltWide)),]
+dFiltAorB<-dFiltW[which(!complete.cases(dFiltW)),]
 
 # Subset only B samples
 dFiltBs<-subset(dFiltAorB, dFiltAorB$B != "NA")
 
 # Create a data frame that have References with either only B or where B > 5x A
-namesToSubset<-data.frame(Names=c(as.character(dFiltLargeB$Reference), as.character(dFiltBs$Reference)))
+namesToSubset<-data.frame(Names=c(as.character(dFiltLB$Reference), as.character(dFiltBs$Reference)))
 
-dFilt$Reference<-as.character(dFilt$Reference)
-
+# dFilt$Reference<-as.character(dFilt$Reference)
+# head(dFilt)
 # Subset original data to only include References that have B samples
 dFiltBs<-subset(dFilt, dFilt$Sample=="B")
 dFiltNew<-subset(dFiltBs, dFiltBs$Reference %in% namesToSubset$Names)
 
 head(dFiltNew)
-
 ```
+
 With an average Ratio for each protein, we can normalize to a loading control
 ```{r}
 norm <- dFiltNew$MeanFC[dFiltNew$GeneSymbol=="Prkaca"]
 norm
 
 dFiltNew$FCnorm <- with(dFiltNew, MeanFC/norm)
-
 ```
 
 Get p-value for each protein
 ```{r}
 mNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","FCnorm"]
-mNorm
+
 sNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","StDev"]
-sNorm
+
 nNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","Count"]
-nNorm
 
 dFiltNew$pVal <- with(dFiltNew,
                    2*pt(
@@ -132,7 +139,7 @@ dFiltNew$pVal <- with(dFiltNew,
                                    (nNorm-1)*sNorm^2)/
                             (Count+nNorm-2))*(1/Count+1/nNorm)))),
                      (Count + nNorm - 2)),lower=FALSE)
-# pt() gives the probability distribution of the student t dist. To get the p-value, we need to multiply the pt() output by two. Futher, if the t value is positive, we need to use 1-t as input. We can get around this by taking the -abs(t).
+# pt() gives the distribution function of the student t dist. To get the p-value, we need to multiply the pt() output by two. Futher, if the t value is positive, we need to use 1-t as input. We can get around this by taking the -abs(t).
 
 # Adjust p-value for multiple calculations
 dFiltNew$FDR <- p.adjust(dFiltNew$pVal,method="BH")
@@ -158,7 +165,7 @@ p1 <- ggplot(data=dFiltNew, aes(x=Log2FCnorm, y=LogFDR, color=threshold)) +
                     size = 2.5,
                     color="black",
                     box.padding = unit(0.35, "lines"),
-                    point.padding = unit(0.3, "lines"))
+                    point.padding = unit(0.3, "lines")) # repel overlapping text labels
 
 # order rows by Log2-transformed mean fold change
 dFiltNew <- dFiltNew[order(dFiltNew$Log2FCnorm),] 
