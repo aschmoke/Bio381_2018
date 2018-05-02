@@ -9,7 +9,7 @@ output:
 ---
 
 ###Final Presentation: Data filtering and analysis in R
-[R Markdown file](Data_filtering_and_analysis_in_R.html)   
+[Presentation](Data_filtering_and_analysis_in_R.html)   
 [.Rmd](Data filtering and analysis in R.Rmd)   
 [SampleData.csv](SampleData.csv) 
 
@@ -49,21 +49,3 @@ Set up webpage & send Slack message
 [ggplot2Homework](ggplotHomework.html)
 
   
-
-```{r,include=FALSE}
-#write.csv2(mtcars, "SampleData.csv")
-#knitr::opts_chunk$set(echo = TRUE)
-#library(magrittr)
-#readLines("./SampleData.csv") %>% 
-#  paste0(collapse="\n") %>% 
-#  openssl::base64_encode() -> encoded
-
-# readBin("SampleData.csv", "raw", file.info("SampleData.csv")$size) %>% 
-#  openssl::base64_encode() -> encoded
-
-# [Download Sample Data](`r sprintf('data:text/csv;base64,%s', encoded)`)
-# <a download="SampleData.csv" href="`r sprintf('data:text/csv;base64,%s', encoded)`">Download Sample Data</a>
-# [Download .Rmd](`r sprintf('data:text/csv;base64,%s', encoded)`)
-```
-
-
