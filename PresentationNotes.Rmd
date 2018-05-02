@@ -1,11 +1,8 @@
 ---
-title: "Data filtering and analysis in R"
+title: "PresentationNotes"
 author: "Anna Schmoker"
-date: "4/29/2018"
-output: 
-  html_document: 
-    highlight: pygments
-    theme: flatly
+date: "5/1/2018"
+output: html_document
 ---
 Make sure you have downloaded the **SampleData.csv** file from the homepage <https://aschmoke.github.io/Bio381_2018/>.
 
@@ -16,135 +13,68 @@ We will be using the following R packages:
 `patchwork`
 `reshape2`
 
-###About this data
-These data were obtained from a quantitative mass spectrometry experiment that aimed to identify binding partners of the protein PKA-C in mouse fibroblast cells in response to a growth factor. Cells were grown in media containing either light or heavy (stable isotope-labeled) amino acids, under growth factor present or absent conditions. The protein-of-interest (POI) was extracted from the cells using an antibody to the POI, along with any proteins that bound to the POI. Experimental conditions were then combined, digested with a proteolytic enzyme, and subjected to LC-MS/MS. Peptide sequences from the heavy and light conditions were determined using the fragmentation spectra, and mapped to proteins in the mouse proteome. Heavy-to-light ratios give the relative abundance of PKA-C binding partners in growth factor present vs absent conditions.
-
 ###Your .csv file
 - convert "#" to "+" using a text editor (e.g. BBedit)
 - remove spaces from column headers
 
-###What we need to do
-1. Filters: high S:N, 3 or more peptides, remove proteins present in the control
-2. Normalize H:L ratios to POI, get mean H:L and SD
-3. Get a p-value for each protein (sig. increased/decreased binding)
-4. Summarize
-
-###Preliminaries
 ```{r}
 library(plyr)
 library(ggplot2)
 library(patchwork)
 library(ggrepel)
 library(reshape2)
-```
 
-###Getting your dataset into R
-```{r,results='hide'}
-# Read the file
 d <- read.table(file="SampleData.csv",header=TRUE,sep=",")
 
-# take a look at it to ensure R is reading the entire file
 head(d)
 tail(d)
-# tail(d)
-str(d)
-```
 
-###Get some basic stats on the data
-```{r}
-# number of rows (peptides) per experimental condition
-# A = control
-# B = experimental
+# Get some basic stats on the data
+
 table(d$SampleID)
-
-# number of genes (some proteins don't have a "gene symbol"
 length(unique(d$GeneSymbol))
-
-# Number of unique proteins
-length(unique(d$Reference))
 ```
 
 Take the heavy-to-light ratio out of Log2 space
-```{r,results='hide'}
-# Create a new column
-# Calculate value based on another value in an existing column
+```{r}
 d$Ratio <- with(d, 2^Log2Ratio)
-head(d)
-
-# Change number of digits after the decimal
-d$Ratio <- round(d$Ratio,4)
 head(d)
 ```
 
-###Subsetting all peptides that meet certain criteria
+### Subsetting all peptides that meet certain criteria
 Require a signal-to-noise ratio > 20
+
 ```{r}
 # We need a unique row!
 d$Row <- with(d, 1:nrow(d))
 
-# Create a subset of the data that excludes any peptides with a "SumSN" less than 20
-# make sure you reference a row with a unique identifier here, otherwise duplicates will be removed
 # "create a subset of d, excluding any rows with a unique "Row" designation that has a "SumSN" value less than 20
 dSN <- subset(d,!Row %in% Row[SumSN < 20]) # Don't include Row designations that match Rows with a SunSN < 20
 
-# Get new stats
 table(dSN$SampleID)
 length(unique(dSN$GeneSymbol))
-length(unique(dSN$Reference))
 ```
 
 ###Summarize peptide information for each protein
 Create a new dataset and summarize using `ddply()` with the `plyr` package
 For ddply: "If blank, fill with reference" and add something to show that this isn't the official gene symbol
 ```{r}
-# Create new dataset from dSN that includes the following
-# Reference (existing)
-# SampleID (existing)
-# GeneSymbol (existing)
-# Count = number of peptides per protein
-# MeanFC = average H:L Ratio
-# StDev = stand deviation H:L Ratio
 dMean <- ddply(dSN,.(Reference,SampleID,GeneSymbol),
                summarize,
                Count=length(Reference),
                MeanFC=mean(Ratio),
                StDev=sd(Ratio))
 # number of rows and columns
-dim(dMean)
-```
-```{r, results='hide'}
-# take a look at the data
 head(dMean)
-```
-```{r}
-# number of proteins
-# before
-Stat <- length(unique(dSN$Reference)) - length(unique(dMean$Reference))
-Stat
-# and after
+length(unique(dSN$Reference))
 length(unique(dMean$Reference))
-# they are the same! Good
-```
-
-Now that we have a column with the number of peptides identified per protein, we can filter based on that stat
-```{r}
-# We subset again!
 
 dFilt <- subset(dMean,!Reference %in% Reference[Count<3]) # subset excluding proteins identified by less than 3 peptides
-dim(dFilt)
 length(unique(dFilt$Reference))
-head(dFilt)
 ```
-
 
 ###Remove proteins in control
 Filter out all proteins in the control, unless "Count" is 5X higher in the experimental group.
-1. subset so only those with both A and B 
-2. divide B by A
-3. subset those that have > 5 in column
-4. rbind just distinct B's and B's greater than 5X their As
-5. Subset data with As removed based on large Bs
-
 ```{r}
 # Reshape into 'wide' format for easier manipulation
 dFiltWide<-dcast(dFilt, Reference ~ SampleID, value.var = "Count")
@@ -153,10 +83,10 @@ head(dFiltWide)
 dFiltAB<-dFiltWide[which(complete.cases(dFiltWide)),]
 
 # Create column that divides Sample B by A
-dFiltAB$mag<-dFiltAB$B/dFiltAB$A
+dFiltAB$div<-dFiltAB$B/dFiltAB$A
 
 # Subset only those where B is at least 5 times greater than A
-dFiltLargeB<-subset(dFiltAB, dFiltAB$mag>=5)
+dFiltLargeB<-subset(dFiltAB, dFiltAB$div>=5)
 
 # Get names of those with either A or B
 dFiltAorB<-dFiltWide[which(!complete.cases(dFiltWide)),]
@@ -174,29 +104,19 @@ dFiltBs<-subset(dFilt, dFilt$Sample=="B")
 dFiltNew<-subset(dFiltBs, dFiltBs$Reference %in% namesToSubset$Names)
 
 head(dFiltNew)
+
 ```
-
 With an average Ratio for each protein, we can normalize to a loading control
-
 ```{r}
-# First we need to find the Ratio for our loading control
-# Save the Prkaca "Ratio" in "norm"
 norm <- dFiltNew$MeanFC[dFiltNew$GeneSymbol=="Prkaca"]
 norm
-```
-```{r,results='hide'}
-# Now we can create a new column in the dFilt data frame with a mean fold change (Ratio) normalized to that of Prkaca, our loading control
+
 dFiltNew$FCnorm <- with(dFiltNew, MeanFC/norm)
-head(dFiltNew)
+
 ```
 
-###Get a p-value & FDR for each binding partner
-With a normalized fold change and standard deviation, we can get a p-value for each Prkaca binding partner to determine which proteins have a H:L Ratio that is significantly different from Prkaca.
-
-If you only have two populations to compare, a simple t-test is easy to conduct using the `t.test()` function in R. However, I couldn't figure out a way to use this function to test the mean Ratio in each row against that for Prkaca, so I had to manually calculate this for each row...
-
+Get p-value for each protein
 ```{r}
-# Save Prkaca stats to use in the formula
 mNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","FCnorm"]
 mNorm
 sNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","StDev"]
@@ -204,44 +124,33 @@ sNorm
 nNorm <- dFiltNew[dFiltNew$GeneSymbol=="Prkaca","Count"]
 nNorm
 
-# Create a new column for the p-value
 dFiltNew$pVal <- with(dFiltNew,
                    2*pt(
                      -abs(
                        ((FCnorm - mNorm)/
-                          sqrt((((Count-1)*StDev^2 + (nNorm-1)*sNorm^2)/
-                                  (Count+nNorm-2))*(1/Count+1/nNorm)))),
+                          sqrt((((Count-1)*StDev^2 +
+                                   (nNorm-1)*sNorm^2)/
+                            (Count+nNorm-2))*(1/Count+1/nNorm)))),
                      (Count + nNorm - 2)),lower=FALSE)
 # pt() gives the probability distribution of the student t dist. To get the p-value, we need to multiply the pt() output by two. Futher, if the t value is positive, we need to use 1-t as input. We can get around this by taking the -abs(t).
-```
 
-Calculate FDR and make other adjustments
-```{r}
 # Adjust p-value for multiple calculations
 dFiltNew$FDR <- p.adjust(dFiltNew$pVal,method="BH")
 
-# Log2-transform the normalized fold change
-dFiltNew$Log2FCnorm <- with(dFiltNew, log(FCnorm,2)) 
+dFiltNew$Log2FCnorm <- with(dFiltNew, log(FCnorm,2))
 
-# Log10-transform the FDR (for data visualization)
 dFiltNew$LogFDR <- with(dFiltNew, -log(FDR,10))
-dim(dFiltNew)
+
 ```
 
-###Create volcano plot to visualize distribution of FDR values and fold change for each protein
 ```{r}
-# Create new column to denote which proteins meet a certain threshold
-# Use to highlight those with an absolute fold change > 4 and a p-value < 0.05
 dFiltNew$threshold <- as.factor(abs(dFiltNew$Log2FCnorm) > 2 &
                                   dFiltNew$FDR < 0.05)
 
-# Construct the plot
 p1 <- ggplot(data=dFiltNew, aes(x=Log2FCnorm, y=LogFDR, color=threshold)) +
-  xlim(c(-5, 5)) + ylim(c(0, 21)) +
-  xlab("log2 fold change") + ylab("-log10 FDR") +
   geom_point(size=1.75) +
   scale_color_manual(values = c("darkgrey", "red")) +
-  theme_bw(base_size = 12) +
+  theme_bw() +
   theme(legend.position = "none") +
   geom_text_repel(data=subset(dFiltNew,FDR < 0.05 &
                                   abs(Log2FCnorm) > 2),
@@ -250,11 +159,7 @@ p1 <- ggplot(data=dFiltNew, aes(x=Log2FCnorm, y=LogFDR, color=threshold)) +
                     color="black",
                     box.padding = unit(0.35, "lines"),
                     point.padding = unit(0.3, "lines"))
-p1
-```
 
-###Create Rank-ordered plot of log2 ratios
-```{r}
 # order rows by Log2-transformed mean fold change
 dFiltNew <- dFiltNew[order(dFiltNew$Log2FCnorm),] 
 
@@ -263,10 +168,9 @@ dFiltNew$Rank <- with(dFiltNew, 1:nrow(dFiltNew))
 
 
 p2 <- ggplot(data=dFiltNew,mapping=aes(x=Rank,y=Log2FCnorm,color=threshold)) +
-  xlab("Rank") + ylab("log2 fold change") +
   geom_point(size=1.75) +
   scale_color_manual(values = c("darkgrey", "red")) +
-  theme_bw(base_size = 12) +
+  theme_bw() +
   theme(legend.position = "none") +
   geom_text_repel(data=subset(dFiltNew,FDR < 0.05 &
                                 abs(Log2FCnorm) > 2),
@@ -275,19 +179,10 @@ p2 <- ggplot(data=dFiltNew,mapping=aes(x=Rank,y=Log2FCnorm,color=threshold)) +
                   color="black",
                   box.padding = unit(0.35, "lines"),
                   point.padding = unit(0.3, "lines"))
-p2
-```
 
-###Create histogram of Log2 ratios
-```{r}
 p3 <- ggplot(data=dFiltNew,mapping=aes(Log2FCnorm,fill=I("dodgerblue"), color=I("black"))) +
   geom_histogram() +
-  theme_bw(base_size = 12)
-p3
-```
-
-###Plot together
-```{r}
+  theme_bw()
 
 p3 + {
   p2 +
