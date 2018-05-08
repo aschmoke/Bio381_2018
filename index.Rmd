@@ -44,6 +44,7 @@ Set up webpage & send Slack message
 
 ###Homework 11   
 [Homework 11](Homework11.html)   
+If the above link does not bring you to Homework 11, here is the [.Rmd](Homework11.Rmd) and [.pdf](Homework11.pdf).
 
 ###Homework ggplot2   
 [ggplot2Homework](ggplotHomework.html)

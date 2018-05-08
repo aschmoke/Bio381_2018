@@ -2,7 +2,9 @@
 title: "Homework 11"
 author: "Anna Schmoker"
 date: "4/4/2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 ## Writing functions for equations
 
