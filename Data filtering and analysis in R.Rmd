@@ -91,6 +91,17 @@ dSN <- subset(d,!Row %in% Row[SumSN < 20]) # Don't include Row designations that
 table(dSN$SampleID)
 length(unique(dSN$GeneSymbol))
 length(unique(dSN$Reference))
+
+dSN$Phosphopeptide <- grepl("@",dSN$Peptide)
+head(dSN)
+tail(dSN)
+dSN
+
+dPhospho <- subset(dSN, Row %in% Row[Phosphopeptide == "TRUE"])
+head(dPhospho)
+
+dSN1 <- subset(dSN, Row %in% Row[Phosphopeptide == "FALSE"])
+
 ```
 
 ###Summarize peptide information for each protein
@@ -104,7 +115,7 @@ For ddply: "If blank, fill with reference" and add something to show that this i
 # Count = number of peptides per protein
 # MeanFC = average H:L Ratio
 # StDev = stand deviation H:L Ratio
-dMean <- ddply(dSN,.(Reference,SampleID,GeneSymbol),
+dMean <- ddply(dSN1,.(Reference,SampleID,GeneSymbol),
                summarize,
                Count=length(Reference),
                MeanFC=mean(Ratio),
@@ -176,6 +187,13 @@ dFiltNew<-subset(dFiltBs, dFiltBs$Reference %in% namesToSubset$Names)
 head(dFiltNew)
 ```
 
+```{r}
+# remove phosphopeptides in the control
+head(dPhospho)
+dPhospho <- subset(dPhospho, dPhospho$SampleID=="B")
+head(dPhospho)
+
+```
 With an average Ratio for each protein, we can normalize to a loading control
 
 ```{r}
@@ -188,6 +206,9 @@ norm
 # Now we can create a new column in the dFilt data frame with a mean fold change (Ratio) normalized to that of Prkaca, our loading control
 dFiltNew$FCnorm <- with(dFiltNew, MeanFC/norm)
 head(dFiltNew)
+
+# same for phospho data
+dPhospho$FCnorm <- with(dPhospho, Ratio/norm)
 ```
 
 ###Get a p-value & FDR for each binding partner
@@ -222,6 +243,7 @@ dFiltNew$FDR <- p.adjust(dFiltNew$pVal,method="BH")
 
 # Log2-transform the normalized fold change
 dFiltNew$Log2FCnorm <- with(dFiltNew, log(FCnorm,2)) 
+dPhospho$Log2FCnorm <- with(dPhospho, log(FCnorm,2))
 
 # Log10-transform the FDR (for data visualization)
 dFiltNew$LogFDR <- with(dFiltNew, -log(FDR,10))
@@ -251,21 +273,35 @@ p1 <- ggplot(data=dFiltNew, aes(x=Log2FCnorm, y=LogFDR, color=threshold)) +
                     box.padding = unit(0.35, "lines"),
                     point.padding = unit(0.3, "lines"))
 p1
+
 ```
 
 ###Create Rank-ordered plot of log2 ratios
 ```{r}
 # order rows by Log2-transformed mean fold change
+drop <- c("pVal","LogFDR","MeanFC","StDev","Count")
+dPhospho <- cbind.data.frame("Reference"=dPhospho$Reference, "SampleID"=dPhospho$SampleID, "GeneSymbol"=dPhospho$GeneSymbol, "FCnorm"=dPhospho$FCnorm, "Log2FCnorm"=dPhospho$Log2FCnorm)
+dPhospho$FDR <- "FALSE"
+dPhospho$threshold <- "Phospho"
+
+dFiltNew <- dFiltNew[ , !(names(dFiltNew) %in% drop)]
+  
+head(dFiltNew)
+head(dPhospho)
+dCombined <- rbind(dFiltNew, dPhospho)
+
+
+dCombined <- dCombined[order(dCombined$Log2FCnorm),] 
 dFiltNew <- dFiltNew[order(dFiltNew$Log2FCnorm),] 
-
 # add rank order based on Log2Ratio
+dCombined$Rank <- with(dCombined, 1:nrow(dCombined))
+head(dCombined)
 dFiltNew$Rank <- with(dFiltNew, 1:nrow(dFiltNew))
-
 
 p2 <- ggplot(data=dFiltNew,mapping=aes(x=Rank,y=Log2FCnorm,color=threshold)) +
   xlab("Rank") + ylab("log2 fold change") +
   geom_point(size=1.75) +
-  scale_color_manual(values = c("darkgrey", "red")) +
+  scale_color_manual(values = c("darkgrey", "red","lightblue")) +
   theme_bw(base_size = 12) +
   theme(legend.position = "none") +
   geom_text_repel(data=subset(dFiltNew,FDR < 0.05 &
@@ -276,6 +312,7 @@ p2 <- ggplot(data=dFiltNew,mapping=aes(x=Rank,y=Log2FCnorm,color=threshold)) +
                   box.padding = unit(0.35, "lines"),
                   point.padding = unit(0.3, "lines"))
 p2
+
 ```
 
 ###Create histogram of Log2 ratios
